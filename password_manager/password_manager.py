@@ -10,6 +10,7 @@ class PasswordManager:
         self.username = username
         self.filepath = os.path.join(DATA_FOLDER, f"{username}_passwords.txt.enc")
         self.passwords = self.load_passwords()
+        self.show_passwords = False
 
     def load_passwords(self):
         if not os.path.exists(self.filepath):

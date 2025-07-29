@@ -14,6 +14,7 @@ class LoginApp:
         self.root = root
         self.root.title("Gestor de Contraseñas - Login")
         self.root.geometry("300x200")
+        self.root.resizable(False, False)
 
         self.key = self.get_or_create_key()
         self.user_manager = UserManager(self.key)
@@ -73,11 +74,12 @@ class PasswordManagerApp:
         self.root = root
         self.root.title(f"Contraseñas de {username}")
         self.root.geometry("800x400")
+        self.root.resizable(False, False)
 
         self.key = key
         self.username = username
         self.pw_manager = PasswordManager(key, username)
-
+        self.show_passwords = False 
         self.build_ui()
         self.load_passwords()
 
@@ -103,7 +105,7 @@ class PasswordManagerApp:
         frame.pack(pady=5)
         
         
-
+        tk.Button(frame, text="Mostrar/Ocultar Contraseñas", command=self.toggle_password_visibility).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Agregar", command=self.add_password).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Editar", command=self.edit_password).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Eliminar", command=self.delete_password).pack(side=tk.LEFT, padx=5)
@@ -111,12 +113,18 @@ class PasswordManagerApp:
         tk.Button(self.root, text="Cerrar sesión", command=self.logout).pack(pady=10)
 
     def load_passwords(self):
-        for i in self.tree.get_children():
-            self.tree.delete(i)
+        self.tree.delete(*self.tree.get_children())
 
         for idx, item in enumerate(self.pw_manager.passwords["contraseñas"]):
-            self.tree.insert("", "end", iid=idx, values=(item["nombre"], item["usuario"], item["contraseña"], item.get("notas", "")))
+            password_display = item["contraseña"] if self.show_passwords else "***"
+            notas = item.get("notas", "")  # obtener notas, si no existe cadena vacía
+            self.tree.insert("", "end", iid=idx, values=(item["nombre"], item["usuario"], password_display, notas))
 
+
+
+    def toggle_password_visibility(self):
+        self.show_passwords = not self.show_passwords
+        self.load_passwords()
 
     def add_password(self):
         nombre = simpledialog.askstring("Nombre", "Nombre del sitio/app:", parent=self.root)
@@ -182,6 +190,7 @@ class AdminPanel:
         self.root = root
         self.root.title("Panel de Administrador")
         self.root.geometry("400x400")
+        self.root.resizable(False, False)
 
         self.key = key
         self.user_manager = UserManager(key)
