@@ -27,7 +27,7 @@ class UserManager:
     def register_user(self, username, password):
         if username in self.users:
             return False, "El usuario ya existe."
-        self.users[username] = password  # guardamos la contraseña simple por ahora
+        self.users[username] = password 
         self.save_users()
         return True, "Usuario registrado con éxito."
 

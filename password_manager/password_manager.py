@@ -1,5 +1,3 @@
-# password_manager/password_manager.py
-
 import json
 import os
 from .storage import StorageManager
@@ -27,20 +25,22 @@ class PasswordManager:
         data = json.dumps(self.passwords)
         StorageManager.save_encrypted_file(self.filepath, data, self.key)
 
-    def add_password(self, nombre, usuario, contraseña):
+    def add_password(self, nombre, usuario, contraseña, notas=""):
         self.passwords["contraseñas"].append({
             "nombre": nombre,
             "usuario": usuario,
-            "contraseña": contraseña
+            "contraseña": contraseña,
+            "notas": notas
         })
         self.save_passwords()
 
-    def edit_password(self, index, nombre, usuario, contraseña):
+    def edit_password(self, index, nombre, usuario, contraseña, notas=""):
         if 0 <= index < len(self.passwords["contraseñas"]):
             self.passwords["contraseñas"][index] = {
                 "nombre": nombre,
                 "usuario": usuario,
-                "contraseña": contraseña
+                "contraseña": contraseña,
+                "notas": notas
             }
             self.save_passwords()
 

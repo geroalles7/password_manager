@@ -1,5 +1,3 @@
-# password_manager/main.py
-
 import os
 from .storage import StorageManager
 from .auth import UserManager
@@ -17,12 +15,10 @@ def get_or_create_key():
         print("🔑 Clave cargada.")
     return StorageManager.load_key(KEY_FILE)
 
-# 👇 función principal del programa
 def main():
     root = tk.Tk()
     app = LoginApp(root)
     root.mainloop()
 
-# 👇 ejecuta el programa si este archivo se ejecuta como principal
 if __name__ == "__main__":
     main()

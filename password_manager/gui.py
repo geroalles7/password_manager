@@ -43,7 +43,7 @@ class LoginApp:
         pw = self.password_entry.get()
 
         if self.user_manager.authenticate_user(user, pw):
-            self.root.destroy()  # Cerramos ventana login
+            self.root.destroy() 
 
             if user == "admin" and pw == "admin_2025":
                 main_window = tk.Tk()
@@ -72,7 +72,7 @@ class PasswordManagerApp:
     def __init__(self, root, key, username):
         self.root = root
         self.root.title(f"Contraseñas de {username}")
-        self.root.geometry("600x400")
+        self.root.geometry("800x400")
 
         self.key = key
         self.username = username
@@ -82,18 +82,20 @@ class PasswordManagerApp:
         self.load_passwords()
 
     def build_ui(self):
-        # Agregamos la columna "Nombre" y definimos las tres columnas
-        self.tree = ttk.Treeview(self.root, columns=("Nombre", "Usuario", "Contraseña"), show="headings")
+       
+        self.tree = ttk.Treeview(self.root, columns=("Nombre", "Usuario", "Contraseña", "Notas"), show="headings")
 
-        # Configuramos los encabezados de las columnas
-        self.tree.heading("Nombre", text="Nombre")
-        self.tree.heading("Usuario", text="Usuario")
-        self.tree.heading("Contraseña", text="Contraseña")
+        
+        self.tree.column("Nombre", width=150, anchor="center")
+        self.tree.column("Usuario", width=150, anchor="center")
+        self.tree.column("Notas", width=200, anchor="center")
+        self.tree.column("Contraseña", width=150, anchor="center")
 
-        # Configuramos ancho de las columnas
-        self.tree.column("Nombre", width=150)
-        self.tree.column("Usuario", width=150)
-        self.tree.column("Contraseña", width=150)
+        self.tree.heading("Nombre", text="Nombre", anchor="center")
+        self.tree.heading("Usuario", text="Usuario", anchor="center")
+        self.tree.heading("Notas", text="Notas", anchor="center")
+        self.tree.heading("Contraseña", text="Contraseña", anchor="center")
+
 
         self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -113,7 +115,7 @@ class PasswordManagerApp:
             self.tree.delete(i)
 
         for idx, item in enumerate(self.pw_manager.passwords["contraseñas"]):
-            self.tree.insert("", "end", iid=idx, values=(item["nombre"], item["usuario"], item["contraseña"]))
+            self.tree.insert("", "end", iid=idx, values=(item["nombre"], item["usuario"], item["contraseña"], item.get("notas", "")))
 
 
     def add_password(self):
@@ -126,8 +128,9 @@ class PasswordManagerApp:
         contraseña = simpledialog.askstring("Contraseña", "Contraseña:", parent=self.root)
         if not contraseña:
             return
+        notas = simpledialog.askstring("Notas", "Notas u observaciones:", parent=self.root) or ""
 
-        self.pw_manager.add_password(nombre, usuario, contraseña)
+        self.pw_manager.add_password(nombre, usuario, contraseña, notas)
         self.load_passwords()
 
     def edit_password(self):
@@ -147,8 +150,9 @@ class PasswordManagerApp:
         contraseña = simpledialog.askstring("Contraseña", "Contraseña:", initialvalue=item["contraseña"], parent=self.root)
         if not contraseña:
             return
+        notas = simpledialog.askstring("Notas", "Notas u observaciones:", initialvalue=item.get("notas", ""), parent=self.root) or ""
 
-        self.pw_manager.edit_password(index, nombre, usuario, contraseña)
+        self.pw_manager.edit_password(index, nombre, usuario, contraseña, notas)
         self.load_passwords()
 
     def delete_password(self):
@@ -164,11 +168,11 @@ class PasswordManagerApp:
             self.load_passwords()
 
     def logout(self):
-        self.root.destroy()  # Cerramos ventana principal
+        self.root.destroy()  
 
-        # Abrimos ventana login otra vez
+        
         root = tk.Tk()
-        from .gui import LoginApp  # Import local para evitar problemas circulares
+        from .gui import LoginApp
         app = LoginApp(root)
         root.mainloop()
 

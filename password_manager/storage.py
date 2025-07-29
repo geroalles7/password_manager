@@ -1,5 +1,3 @@
-# password_manager/storage.py
-
 from cryptography.fernet import Fernet
 
 class StorageManager:
