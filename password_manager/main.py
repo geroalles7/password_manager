@@ -8,7 +8,6 @@ from .gui import LoginApp
 
 KEY_FILE = "password_manager/data/clave.key"
 
-# 👇 esta es la función que estaba faltando
 def get_or_create_key():
     if not os.path.exists(KEY_FILE):
         key = StorageManager.generate_key()

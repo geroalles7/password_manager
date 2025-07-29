@@ -43,13 +43,19 @@ class LoginApp:
         pw = self.password_entry.get()
 
         if self.user_manager.authenticate_user(user, pw):
-            messagebox.showinfo("Éxito", f"¡Bienvenido {user}!")
             self.root.destroy()  # Cerramos ventana login
-            main_window = tk.Tk()
-            PasswordManagerApp(main_window, self.key, user)
-            main_window.mainloop()
+
+            if user == "admin" and pw == "admin_2025":
+                main_window = tk.Tk()
+                AdminPanel(main_window, self.key)
+                main_window.mainloop()
+            else:
+                main_window = tk.Tk()
+                PasswordManagerApp(main_window, self.key, user)
+                main_window.mainloop()
         else:
             messagebox.showerror("Error", "Usuario o contraseña incorrectos.")
+
 
     def register(self):
         user = self.username_entry.get()
@@ -93,6 +99,8 @@ class PasswordManagerApp:
 
         frame = tk.Frame(self.root)
         frame.pack(pady=5)
+        
+        
 
         tk.Button(frame, text="Agregar", command=self.add_password).pack(side=tk.LEFT, padx=5)
         tk.Button(frame, text="Editar", command=self.edit_password).pack(side=tk.LEFT, padx=5)
@@ -109,13 +117,13 @@ class PasswordManagerApp:
 
 
     def add_password(self):
-        nombre = simpledialog.askstring("Nombre", "Nombre del sitio/app:")
+        nombre = simpledialog.askstring("Nombre", "Nombre del sitio/app:", parent=self.root)
         if not nombre:
             return
-        usuario = simpledialog.askstring("Usuario", "Nombre de usuario:")
+        usuario = simpledialog.askstring("Usuario", "Nombre de usuario:", parent=self.root)
         if not usuario:
             return
-        contraseña = simpledialog.askstring("Contraseña", "Contraseña:")
+        contraseña = simpledialog.askstring("Contraseña", "Contraseña:", parent=self.root)
         if not contraseña:
             return
 
@@ -125,18 +133,18 @@ class PasswordManagerApp:
     def edit_password(self):
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Error", "Seleccioná una contraseña para editar.")
+            messagebox.showwarning("Error", "Seleccioná una contraseña para editar.", parent=self.root)
             return
         index = int(selected[0])
         item = self.pw_manager.passwords["contraseñas"][index]
 
-        nombre = simpledialog.askstring("Nombre", "Nombre del sitio/app:", initialvalue=item["nombre"])
+        nombre = simpledialog.askstring("Nombre", "Nombre del sitio/app:", initialvalue=item["nombre"], parent=self.root)
         if not nombre:
             return
-        usuario = simpledialog.askstring("Usuario", "Nombre de usuario:", initialvalue=item["usuario"])
+        usuario = simpledialog.askstring("Usuario", "Nombre de usuario:", initialvalue=item["usuario"], parent=self.root)
         if not usuario:
             return
-        contraseña = simpledialog.askstring("Contraseña", "Contraseña:", initialvalue=item["contraseña"])
+        contraseña = simpledialog.askstring("Contraseña", "Contraseña:", initialvalue=item["contraseña"], parent=self.root)
         if not contraseña:
             return
 
@@ -146,11 +154,11 @@ class PasswordManagerApp:
     def delete_password(self):
         selected = self.tree.selection()
         if not selected:
-            messagebox.showwarning("Error", "Seleccioná una contraseña para eliminar.")
+            messagebox.showwarning("Error", "Seleccioná una contraseña para eliminar.", parent=self.root)
             return
         index = int(selected[0])
 
-        confirm = messagebox.askyesno("Confirmar", "¿Querés eliminar esta contraseña?")
+        confirm = messagebox.askyesno("Confirmar", "¿Querés eliminar esta contraseña?", parent=self.root)
         if confirm:
             self.pw_manager.delete_password(index)
             self.load_passwords()
@@ -162,4 +170,74 @@ class PasswordManagerApp:
         root = tk.Tk()
         from .gui import LoginApp  # Import local para evitar problemas circulares
         app = LoginApp(root)
+        root.mainloop()
+
+
+class AdminPanel:
+    def __init__(self, root, key):
+        self.root = root
+        self.root.title("Panel de Administrador")
+        self.root.geometry("400x400")
+
+        self.key = key
+        self.user_manager = UserManager(key)
+
+        self.build_ui()
+        self.load_users()
+
+    def build_ui(self):
+        self.tree = ttk.Treeview(self.root, columns=("Usuario", "Contraseña"), show="headings")
+
+        self.tree.heading("Usuario", text="Usuario")
+        self.tree.heading("Contraseña", text="Contraseña")
+
+        self.tree.column("Usuario", width=150)
+        self.tree.column("Contraseña", width=200)
+
+        self.tree.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        frame = tk.Frame(self.root)
+        frame.pack(pady=5)
+
+        tk.Button(frame, text="Cambiar contraseña", command=self.change_password).pack(side=tk.LEFT, padx=5)
+        tk.Button(frame, text="Cerrar sesión", command=self.logout).pack(side=tk.LEFT, padx=5)
+
+
+    def load_users(self):
+        self.user_manager.users = self.user_manager.load_users()
+
+        self.tree.delete(*self.tree.get_children())
+
+        for idx, (usuario, contraseña) in enumerate(self.user_manager.users.items()):
+            if usuario != "admin" and usuario.strip() != "":
+                iid = f"user_{idx}"
+                self.tree.insert("", "end", iid=iid, values=(usuario, contraseña))
+
+
+
+
+
+
+    def change_password(self):
+        selected = self.tree.selection()
+        if not selected:
+            messagebox.showwarning("Error", "Seleccioná un usuario.")
+            return
+
+        usuario = self.tree.item(selected[0])['values'][0]
+        nueva = simpledialog.askstring("Nueva contraseña", f"Nueva contraseña para {usuario}:")
+        if not nueva:
+            return
+
+        self.user_manager.users = self.user_manager.load_users()
+        self.user_manager.users[usuario] = nueva
+        self.user_manager.save_users()
+        self.load_users()
+        messagebox.showinfo("Listo", f"Contraseña cambiada para {usuario}.")
+
+
+    def logout(self):
+        self.root.destroy()
+        root = tk.Tk()
+        LoginApp(root)
         root.mainloop()
