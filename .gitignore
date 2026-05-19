@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# Build / packaging
+build/
+dist/
+*.spec
+
+# PyInstaller cache
+*.manifest
+*.pkg
+
+# Installer output
+Output/
+
+# Local app data / generated files
+data/
+*.vault
+users.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Python packaging
+*.egg-info/
+.eggs/
+
+# Test / cache
+.pytest_cache/
+.mypy_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# Environment variables
+.env.local
+.env.production
+
+# SQLite (por si agregás en futuro)
+*.sqlite3
+*.db
