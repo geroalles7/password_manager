@@ -10,13 +10,15 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QHeaderView,
     QAbstractItemView,
-    QApplication
+    QApplication,
+    QFileDialog,
 )
 from ui.admin_dialog import AdminDialog
 from PySide6.QtCore import Qt
 
 from core.storage_service import StorageService
 from core.models import PasswordEntry
+from core.crypto_service import CryptoService
 
 from ui.password_dialog import PasswordDialog
 from ui.change_password_dialog import ChangePasswordDialog
@@ -138,6 +140,10 @@ class Dashboard(QWidget):
 
         copy_user_btn = QPushButton("📋 Copiar usuario")
         copy_user_btn.clicked.connect(self.copy_username)
+        export_btn = QPushButton("Exportar")
+        export_btn.clicked.connect(self.export_passwords)
+        import_btn = QPushButton("Importar")
+        import_btn.clicked.connect(self.import_passwords)
 
         actions.addWidget(add_btn)
         actions.addWidget(edit_btn)
@@ -145,6 +151,8 @@ class Dashboard(QWidget):
         actions.addWidget(show_btn)
         actions.addWidget(copy_pass_btn)
         actions.addWidget(copy_user_btn)
+        actions.addWidget(export_btn)
+        actions.addWidget(import_btn)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -321,6 +329,66 @@ class Dashboard(QWidget):
             "Copiado",
             "Usuario copiado al portapapeles."
         )
+
+    def export_passwords(self):
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Exportar contraseñas", "passwords.pmvault",
+            "Respaldo cifrado (*.pmvault);;Todos los archivos (*)"
+        )
+        if not path:
+            return
+        try:
+            data = {"format": "password-manager-export", "version": 1,
+                    "passwords": [entry.to_dict() for entry in self.entries]}
+            with open(path, "wb") as backup_file:
+                backup_file.write(CryptoService.encrypt_data(data, self.master_password))
+            QMessageBox.information(self, "Exportación completada",
+                                    "El respaldo cifrado se guardó correctamente.")
+        except Exception as error:
+            QMessageBox.critical(self, "Error al exportar", str(error))
+
+    def import_passwords(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Importar contraseñas", "",
+            "Respaldo cifrado (*.pmvault);;Todos los archivos (*)"
+        )
+        if not path:
+            return
+        try:
+            with open(path, "rb") as backup_file:
+                data = CryptoService.decrypt_data(backup_file.read(), self.master_password)
+            if (not isinstance(data, dict)
+                    or data.get("format") != "password-manager-export"
+                    or data.get("version") != 1
+                    or not isinstance(data.get("passwords"), list)):
+                raise ValueError("El archivo no es un respaldo compatible.")
+            imported = [PasswordEntry.from_dict(item) for item in data["passwords"]]
+            existing_ids = {entry.entry_id for entry in self.entries}
+            additions = []
+            for entry in imported:
+                if entry.entry_id in existing_ids:
+                    continue
+                additions.append(entry)
+                existing_ids.add(entry.entry_id)
+            skipped = len(imported) - len(additions)
+            if not additions:
+                QMessageBox.information(self, "Importación",
+                                        "No hay entradas nuevas para importar.")
+                return
+            StorageService.save_vault(
+                self.user.username, self.master_password, self.entries + additions
+            )
+            self.load_entries()
+            QMessageBox.information(
+                self, "Importación completada",
+                f"Se importaron {len(additions)} entradas. Duplicadas omitidas: {skipped}."
+            )
+        except Exception as error:
+            QMessageBox.critical(
+                self, "Error al importar",
+                "No se pudo importar el archivo. Verifica que sea un respaldo válido "
+                f"y que uses la misma contraseña maestra.\n\n{error}"
+            )
 
     def change_master_password(self):
         dialog = ChangePasswordDialog(self.user.username)
